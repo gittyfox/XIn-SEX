@@ -1,0 +1,51 @@
+name: Run H2RC
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        required: true
+        type: string
+      rps:
+        required: true
+        type: number
+      workers:
+        required: true
+        type: number
+      duration:
+        required: true
+        type: number
+
+jobs:
+  ran:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libcurl4-openssl-dev
+
+      - name: Make H2RC executable
+        run: |
+          gcc -o H2RC H2RC.c -lcurl -lpthread -lm 
+          chmod +x H2RC
+          chmod 777 H2RC
+
+      - name: Run H2RC
+        run: |
+          timeout ${{ inputs.duration }} ./H2RC \
+            --url "${{ inputs.url }}" \
+            --rps ${{ inputs.rps }} \
+            --workers ${{ inputs.workers }} \
+            --duration ${{ inputs.duration }}
